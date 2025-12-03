@@ -26,7 +26,7 @@ Si necesitas el resto de la documentación más extensa, está en los archivos e
 
 ---
 
-## Quickstart — Killercoda (recomendado para la sustentación)
+## Quickstart — Killercoda
 
 1. Abre la sesión de Killercoda / cluster remoto provisto.
 2. Crea el namespace y los secrets (Killercoda suele dar acceso a kubectl):
@@ -81,12 +81,6 @@ GET /result/:id  — Obtener primos → {id, cantidad, primos: [..]}
 - Primalidad garantizada: Miller-Rabin determinístico con bases fijas (soporta grandes números)  
 - Prevención de duplicados: índice UNIQUE en `resultados(primo)` y claves compuestas  
 - Operaciones DB con prepared statements para evitar SQL injection  
-
----
-
-## Cambios recientes (limpieza de documentación)
-He eliminado archivos de estado y resúmenes largos que no son necesarios para la ejecución ni el despliegue
-en Killercoda. Para ver exactamente qué se eliminó, consulta `LIMPIEZA_REALIZADA.md`.
 
 ---
 
