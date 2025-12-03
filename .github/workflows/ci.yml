@@ -1,0 +1,74 @@
+name: CI Build and Test
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_DB: distribuidos
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:8432
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y gcc make postgresql-client libpq-dev pkg-config
+
+    - name: Build project
+      run: |
+        cd ${{ github.workspace }}
+        make clean
+        make
+        ls -lh server
+
+    - name: Initialize database
+      env:
+        PGPASSWORD: postgres
+      run: |
+        sleep 5
+        psql -h localhost -U postgres -d distribuidos -f sql/init.sql
+
+    - name: Start server in background
+      env:
+        DATABASE_URL: postgresql://postgres:postgres@localhost:5432/distribuidos
+      run: |
+        cd ${{ github.workspace }}
+        timeout 30 ./server &
+        sleep 3
+
+    - name: Run test script
+      env:
+        DATABASE_URL: postgresql://postgres:postgres@localhost:5432/distribuidos
+      run: |
+        cd ${{ github.workspace }}
+        chmod +x scripts/test-api.sh
+        bash scripts/test-api.sh
+
+    - name: Check server still running
+      run: |
+        if pgrep -f "^\./server" > /dev/null; then
+          echo "✓ Server is running"
+          pkill -f "^\./server"
+        else
+          echo "✗ Server is not running"
+          exit 1
+        fi

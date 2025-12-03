@@ -1,0 +1,55 @@
+# Binarios compilados
+*.o
+*.a
+*.so
+server
+
+# Archivos temporales
+*.swp
+*.swo
+*~
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
+*.code-workspace
+
+# Build
+build/
+dist/
+cmake-build-*/
+
+# Docker
+.dockerignore
+
+# Environment
+.env
+.env.local
+*.pem
+*.key
+
+# Logs
+*.log
+logs/
+
+# Caché
+.cache/
+__pycache__/
+
+# Test coverage
+coverage/
+*.gcda
+*.gcov
+
+# Node (si alguna vez se usa)
+node_modules/
+package-lock.json
+
+# Git
+.git/
+.gitmodules
+
+# Archivos del sistema
+Thumbs.db
+.DS_Store

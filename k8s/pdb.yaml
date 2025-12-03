@@ -1,0 +1,13 @@
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: primes-server-pdb
+  namespace: primes
+  labels:
+    app: primes-server
+    version: v1
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: primes-server

@@ -1,0 +1,96 @@
+version: '3.8'
+
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: primes_redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - redis_data:/data
+    networks:
+      - primes-network
+    command: redis-server --appendonly no
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: primes_postgres
+    environment:
+      POSTGRES_DB: primes
+      POSTGRES_USER: primes_user
+      POSTGRES_PASSWORD: primes_pass
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./sql/init.sql:/docker-entrypoint-initdb.d/01-init.sql
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U primes_user -d primes"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - primes-network
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: api
+    container_name: primes_api
+    environment:
+      DATABASE_URL: "host=postgres port=5432 dbname=primes user=primes_user password=primes_pass sslmode=disable"
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      PORT: 8000
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/", "||", "exit", "1"]
+      interval: 15s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    networks:
+      - primes-network
+    restart: unless-stopped
+
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: worker
+    container_name: primes_worker_1
+    environment:
+      DATABASE_URL: "host=postgres port=5432 dbname=primes user=primes_user password=primes_pass sslmode=disable"
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - primes-network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  primes-network:
+    driver: bridge
